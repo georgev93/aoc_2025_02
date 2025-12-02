@@ -1,31 +1,44 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-pub fn parse_file(path: &str) -> Vec<String> {
-    FileParser.parse(path)
-}
+// pub fn parse_lines(path: &str) -> Vec<String> {
+//     FileParser.parse_lines(path)
+// }
 
 pub trait FileParserTrait {
-    fn parse(&self, path: &str) -> Vec<String>;
+    fn parse_lines(&self) -> Vec<String>;
+    fn parse_delimeted(&self) -> Vec<String>;
 }
 
-pub struct FileParser;
+pub struct FileParser {
+    file: File,
+}
 
-impl FileParser {}
-
-impl FileParserTrait for FileParser {
-    fn parse(&self, path: &str) -> Vec<String> {
+impl FileParser {
+    fn new(path: &str) -> Self {
         let file = File::open(path).unwrap_or_else(|_| {
             panic!("Could not find file \"{path}\"");
         });
 
-        let reader = BufReader::new(file);
+        Self { file }
+    }
+}
 
+impl FileParserTrait for FileParser {
+    fn parse_lines(&self) -> Vec<String> {
         let mut lines: Vec<String> = Vec::new();
-        for line in reader.lines() {
+        for line in BufReader::new(&self.file).lines() {
             lines.push(line.unwrap().clone());
         }
         lines
+    }
+
+    fn parse_delimeted(&self) -> Vec<String> {
+        let mut items: Vec<String> = Vec::new();
+        for item in BufReader::new(&self.file).split(b',') {
+            items.push(String::from_utf8(item.unwrap().trim_ascii().to_vec()).unwrap());
+        }
+        items
     }
 }
 
@@ -42,7 +55,11 @@ pub mod tests {
         }
 
         impl FileParserTrait for MockFileParser {
-            fn parse(&self, _path: &str) -> Vec<String> {
+            fn parse_lines(&self) -> Vec<String> {
+                self.mock_data.clone()
+            }
+
+            fn parse_delimeted(&self) -> Vec<String> {
                 self.mock_data.clone()
             }
         }
@@ -53,7 +70,7 @@ pub mod tests {
         let mock_parser = mocks::MockFileParser {
             mock_data: vec!["one".to_string(), "two".to_string(), "three".to_string()],
         };
-        let result_array = mock_parser.parse("my_path");
+        let result_array = mock_parser.parse_lines();
 
         assert_eq!(result_array[0], "one");
         assert_eq!(result_array[1], "two");
@@ -63,12 +80,12 @@ pub mod tests {
     #[test]
     #[should_panic(expected = "Could not find file \"not a path\"")]
     fn file_opener_bad_file() {
-        FileParser.parse("not a path");
+        FileParser::new("not a path").parse_lines();
     }
 
     #[test]
     fn file_opener() {
-        let result_vec = FileParser.parse("tests/file_opening_test.txt");
+        let result_vec = FileParser::new("tests/file_opening_test.txt").parse_lines();
 
         assert_eq!(result_vec[0], "Here is a file");
         assert_eq!(result_vec[1], "It has stuff");
@@ -78,7 +95,7 @@ pub mod tests {
 
     #[test]
     fn file_opener_single() {
-        let result_vec = FileParser.parse("tests/single_line_file.txt");
+        let result_vec = FileParser::new("tests/single_line_file.txt").parse_lines();
 
         assert_eq!(result_vec[0], "This file has one line");
     }
@@ -86,6 +103,15 @@ pub mod tests {
     #[test]
     #[should_panic(expected = "Could not find file \"tests/non_open_permission.txt\"")]
     fn file_permission_issue() {
-        FileParser.parse("tests/non_open_permission.txt");
+        FileParser::new("tests/non_open_permission.txt").parse_lines();
+    }
+
+    #[test]
+    fn single_line_comma() {
+        let result_vec = FileParser::new("tests/comma_delimited.txt").parse_delimeted();
+        assert_eq!(result_vec[0], "one");
+        assert_eq!(result_vec[1], "two");
+        assert_eq!(result_vec[2], "three");
+        assert_eq!(result_vec[3], "four");
     }
 }
