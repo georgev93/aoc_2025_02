@@ -1,0 +1,21 @@
+[package]
+name = "aoc_2025_02"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[profile.release]        # default release profile
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.fast]           # custom profile for maximum speed
+inherits = "release"
+
+[profile.small]          # custom profile for smallest size
+inherits = "release"
+opt-level = "z"
+lto = true
