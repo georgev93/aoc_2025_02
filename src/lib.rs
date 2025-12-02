@@ -1,4 +1,6 @@
 mod file_parser;
+use std::{sync::{Arc, atomic::{AtomicU64, Ordering}}, thread};
+
 use crate::{file_parser::{FileParser, FileParserTrait}, id_range::IdRange};
 
 mod id_range;
@@ -13,14 +15,24 @@ pub fn solve(input_file: &str) -> (u64, u64) {
         id_range_vector.push(IdRange::new(range_string.as_str()))
     }
 
-    let mut result = 0;
+    let result = Arc::new(AtomicU64::new(0));
+
+    let mut handles: Vec<std::thread::JoinHandle<()>> = Vec::with_capacity(id_range_vector.len());
     for id_range in id_range_vector {
-        for invalid_id in id_range.get_invalid_ids() {
-            result += invalid_id
-        }
+        let result_clone = Arc::clone(&result);
+        let handle = thread::spawn(move || {
+            for invalid_id in id_range.get_invalid_ids() {
+                result_clone.fetch_add(invalid_id, Ordering::SeqCst);
+            }
+        });
+        handles.push(handle);
     }
 
-    (result, 0)
+    for handle in handles {
+        handle.join().expect("Thread panicked!");
+    }
+
+    (result.load(Ordering::Acquire), 0)
 }
 
 #[cfg(test)]
