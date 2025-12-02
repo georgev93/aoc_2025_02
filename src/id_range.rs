@@ -4,6 +4,7 @@ pub struct IdRange {
 }
 
 struct IdDecomposition {
+    input: String,
     left: u64,
     right: u64,
     length: usize,
@@ -21,14 +22,39 @@ impl IdDecomposition {
         }
 
         Self {
+            input,
             left,
             right,
             length,
         }
     }
 
-    fn is_invalid(&self) -> bool {
+    fn is_invalid_pt1(&self) -> bool {
         (self.length.is_multiple_of(2)) && (self.left == self.right)
+    }
+
+    fn is_invalid_pt2(&self) -> bool {
+        if self.length == 1 {
+            return false;
+        }
+
+        for possible_split in 0..=self.length / 2 {
+            if self.length.is_multiple_of(possible_split) {
+                let chunks: Vec<&str> = self
+                    .input
+                    .as_bytes()
+                    .chunks(possible_split)
+                    .map(|b| std::str::from_utf8(b).expect("Non UTF-8 chars detected"))
+                    .collect();
+                if chunks
+                    .first()
+                    .is_none_or(|first| chunks.iter().all(|s| s == first))
+                {
+                    return true;
+                }
+            }
+        }
+        false
     }
 }
 
@@ -41,17 +67,20 @@ impl IdRange {
         }
     }
 
-    pub fn get_invalid_ids(&self) -> Vec<u64> {
-        // let min = IdDecomposition::new(self.min);
-        // let max = IdDecomposition::new(self.max);
-
-        let mut ret_vec = vec![];
+    pub fn get_invalid_ids(&self) -> (Vec<u64>, Vec<u64>) {
+        let mut ret_vec1 = vec![];
+        let mut ret_vec2 = vec![];
         for val in self.min..=self.max {
-            if IdDecomposition::new(val).is_invalid() {
-                ret_vec.push(val)
+            let decomp = IdDecomposition::new(val);
+            if decomp.is_invalid_pt1() {
+                ret_vec1.push(val);
+            }
+            if decomp.is_invalid_pt2() {
+                ret_vec2.push(val);
+                println!("{val}");
             }
         }
-        ret_vec
+        (ret_vec1, ret_vec2)
     }
 }
 
@@ -73,46 +102,67 @@ mod tests {
     #[test]
     fn get_invalid_ids_example() {
         let mut my_range = IdRange { min: 11, max: 22 };
-        assert_eq!(my_range.get_invalid_ids(), vec![11, 22]);
+        assert_eq!(my_range.get_invalid_ids(), (vec![11, 22], vec![11, 22]));
 
         my_range = IdRange { min: 95, max: 115 };
-        assert_eq!(my_range.get_invalid_ids(), vec![99]);
+        assert_eq!(my_range.get_invalid_ids(), (vec![99], vec![99, 111]));
 
         my_range = IdRange {
             min: 998,
             max: 1012,
         };
-        assert_eq!(my_range.get_invalid_ids(), vec![1010]);
+        assert_eq!(my_range.get_invalid_ids(), (vec![1010], vec![999, 1010]));
 
         my_range = IdRange {
             min: 1188511880,
             max: 1188511890,
         };
-        assert_eq!(my_range.get_invalid_ids(), vec![1188511885]);
+        assert_eq!(
+            my_range.get_invalid_ids(),
+            (vec![1188511885], vec![1188511885])
+        );
 
         my_range = IdRange {
             min: 222220,
             max: 222224,
         };
-        assert_eq!(my_range.get_invalid_ids(), vec![222222]);
+        assert_eq!(my_range.get_invalid_ids(), (vec![222222], vec![222222]));
 
         my_range = IdRange {
             min: 1698522,
             max: 1698528,
         };
-        assert_eq!(my_range.get_invalid_ids(), vec![]);
+        assert_eq!(my_range.get_invalid_ids(), (vec![], vec![]));
 
         my_range = IdRange {
             min: 446443,
             max: 446449,
         };
-        assert_eq!(my_range.get_invalid_ids(), vec![446446]);
+        assert_eq!(my_range.get_invalid_ids(), (vec![446446], vec![446446]));
 
         my_range = IdRange {
             min: 38593856,
             max: 38593862,
         };
-        assert_eq!(my_range.get_invalid_ids(), vec![38593859]);
+        assert_eq!(my_range.get_invalid_ids(), (vec![38593859], vec![38593859]));
+
+        my_range = IdRange {
+            min: 565653,
+            max: 565659,
+        };
+        assert_eq!(my_range.get_invalid_ids(), (vec![], vec![565656]));
+
+        my_range = IdRange {
+            min: 824824821,
+            max: 824824827,
+        };
+        assert_eq!(my_range.get_invalid_ids(), (vec![], vec![824824824]));
+
+        my_range = IdRange {
+            min: 2121212118,
+            max: 2121212124,
+        };
+        assert_eq!(my_range.get_invalid_ids(), (vec![], vec![2121212121]));
     }
 
     #[test]
