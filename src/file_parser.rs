@@ -15,7 +15,7 @@ pub struct FileParser {
 }
 
 impl FileParser {
-    fn new(path: &str) -> Self {
+    pub fn new(path: &str) -> Self {
         let file = File::open(path).unwrap_or_else(|_| {
             panic!("Could not find file \"{path}\"");
         });
