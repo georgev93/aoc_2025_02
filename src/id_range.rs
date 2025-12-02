@@ -77,7 +77,6 @@ impl IdRange {
             }
             if decomp.is_invalid_pt2() {
                 ret_vec2.push(val);
-                println!("{val}");
             }
         }
         (ret_vec1, ret_vec2)
