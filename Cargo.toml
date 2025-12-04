@@ -3,7 +3,13 @@ name = "aoc_2025_02"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[dev-dependencies]
+criterion = "0.8.0"
+gnuplot = "0.0.46"
+
+[[bench]]
+name = "my_bench"
+harness = false
 
 [lints.rust]
 dead_code = "allow"
@@ -22,3 +28,7 @@ inherits = "release"
 inherits = "release"
 opt-level = "z"
 lto = true
+
+[profile.bench]
+inherits = "fast"
+
