@@ -37,6 +37,7 @@ name = "aoc_2025_02"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "rayon",
 ]
 
 [[package]]

@@ -31,3 +31,6 @@ lto = true
 [profile.bench]
 inherits = "fast"
 
+[dependencies]
+rayon = "1.11.0"
+
